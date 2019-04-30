@@ -137,10 +137,10 @@ sub showHelp($)
     print "\n";
     print "Backup and Restore Commands:\n";
     print "  backup <basename>            - Backup important indices into a file per index, filenames start with <basename>\n";
-    print "  export <index> <basename>    - Save a single index into a file, filename starts with <basename>\n";
-    print "  restore <filename>           - Restore single index\n";
     print "  rollback <basename> [<opts>] - Rollback to a particular version; filenames of settings, mappings, templates, and documents start with <basename>\n";
     print "    --skipupgradeall           - Do not upgrade Sessions\n";
+    print "  export <index> <basename>    - Save a single index into a file, filename starts with <basename>\n";
+    print "  import <filename>            - Import single index from <filename>\n";
     print "  users-export <filename>      - Save the users info to <filename>\n";
     print "  users-import <filename>      - Load the users info from <filename>\n";
     print "\n";
@@ -1893,8 +1893,8 @@ while (@ARGV > 0 && substr($ARGV[0], 0, 1) eq "-") {
 
 showHelp("Help:") if ($ARGV[1] =~ /^help$/);
 showHelp("Missing arguments") if (@ARGV < 2);
-showHelp("Unknown command '$ARGV[1]'") if ($ARGV[1] !~ /^(init|initnoprompt|clean|info|wipe|upgrade|upgradenoprompt|disableusers|users-?import|restore|rollback|users-?export|export|backup|expire|rotate|optimize|mv|rm|rm-?missing|rm-?node|add-?missing|field|force-?put-?version|sync-?files|hide-?node|unhide-?node|add-?alias|set-?replicas|set-?shards-?per-?node|set-?allocation-?enable|allocate-?empty|unflood-?stage)$/);
-showHelp("Missing arguments") if (@ARGV < 3 && $ARGV[1] =~ /^(users-?import|restore|rollback|users-?export|backup|rm|rm-?missing|rm-?node|hide-?node|unhide-?node|set-?allocation-?enable|unflood-?stage)$/);
+showHelp("Unknown command '$ARGV[1]'") if ($ARGV[1] !~ /^(init|initnoprompt|clean|info|wipe|upgrade|upgradenoprompt|disableusers|users-?import|import|rollback|users-?export|export|backup|expire|rotate|optimize|mv|rm|rm-?missing|rm-?node|add-?missing|field|force-?put-?version|sync-?files|hide-?node|unhide-?node|add-?alias|set-?replicas|set-?shards-?per-?node|set-?allocation-?enable|allocate-?empty|unflood-?stage)$/);
+showHelp("Missing arguments") if (@ARGV < 3 && $ARGV[1] =~ /^(users-?import|import|rollback|users-?export|backup|rm|rm-?missing|rm-?node|hide-?node|unhide-?node|set-?allocation-?enable|unflood-?stage)$/);
 showHelp("Missing arguments") if (@ARGV < 4 && $ARGV[1] =~ /^(field|export|add-?missing|sync-?files|add-?alias|set-?replicas|set-?shards-?per-?node)$/);
 showHelp("Missing arguments") if (@ARGV < 5 && $ARGV[1] =~ /^(allocate-?empty)$/);
 showHelp("Must have both <old fn> and <new fn>") if (@ARGV < 4 && $ARGV[1] =~ /^(mv)$/);
@@ -1911,7 +1911,7 @@ if ($ARGV[0] =~ /^http/) {
     $main::elasticsearch = "http://$ARGV[0]";
 }
 
-if ($ARGV[1] =~ /^(users-?import|restore)$/) {
+if ($ARGV[1] =~ /^(users-?import|import)$/) {
     open(my $fh, "<", $ARGV[2]) or die "cannot open < $ARGV[2]: $!";
     my $data = do { local $/; <$fh> };
     esPost("/_bulk", $data);
