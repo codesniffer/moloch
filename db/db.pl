@@ -136,8 +136,8 @@ sub showHelp($)
     print "      days                     - Number of days of inactivity (integer)\n";
     print "\n";
     print "Backup and Restore Commands:\n";
-    print "  backup <basename>            - Backup important indices into a file per index, filenames start with <basename>\n";
-    print "  rollback <basename> [<opts>] - Rollback to a particular version; filenames of settings, mappings, templates, and documents start with <basename>\n";
+    print "  backup <basename>            - Backup important indices, settings, mappings, and templates into a file per index, setting, mapping, and template; filenames start with <basename>\n";
+    print "  restore <basename> [<opts>]  - Restore a particular version of indices, settings, mappings, and templates; filenames of settings, mappings, templates, and data start with <basename>\n";
     print "    --skipupgradeall           - Do not upgrade Sessions\n";
     print "  export <index> <basename>    - Save a single index into a file, filename starts with <basename>\n";
     print "  import <filename>            - Import single index from <filename>\n";
@@ -1893,15 +1893,15 @@ while (@ARGV > 0 && substr($ARGV[0], 0, 1) eq "-") {
 
 showHelp("Help:") if ($ARGV[1] =~ /^help$/);
 showHelp("Missing arguments") if (@ARGV < 2);
-showHelp("Unknown command '$ARGV[1]'") if ($ARGV[1] !~ /^(init|initnoprompt|clean|info|wipe|upgrade|upgradenoprompt|disableusers|users-?import|import|rollback|users-?export|export|backup|expire|rotate|optimize|mv|rm|rm-?missing|rm-?node|add-?missing|field|force-?put-?version|sync-?files|hide-?node|unhide-?node|add-?alias|set-?replicas|set-?shards-?per-?node|set-?allocation-?enable|allocate-?empty|unflood-?stage)$/);
-showHelp("Missing arguments") if (@ARGV < 3 && $ARGV[1] =~ /^(users-?import|import|rollback|users-?export|backup|rm|rm-?missing|rm-?node|hide-?node|unhide-?node|set-?allocation-?enable|unflood-?stage)$/);
+showHelp("Unknown command '$ARGV[1]'") if ($ARGV[1] !~ /^(init|initnoprompt|clean|info|wipe|upgrade|upgradenoprompt|disableusers|users-?import|import|restore|users-?export|export|backup|expire|rotate|optimize|mv|rm|rm-?missing|rm-?node|add-?missing|field|force-?put-?version|sync-?files|hide-?node|unhide-?node|add-?alias|set-?replicas|set-?shards-?per-?node|set-?allocation-?enable|allocate-?empty|unflood-?stage)$/);
+showHelp("Missing arguments") if (@ARGV < 3 && $ARGV[1] =~ /^(users-?import|import|users-?export|backup|restore|rm|rm-?missing|rm-?node|hide-?node|unhide-?node|set-?allocation-?enable|unflood-?stage)$/);
 showHelp("Missing arguments") if (@ARGV < 4 && $ARGV[1] =~ /^(field|export|add-?missing|sync-?files|add-?alias|set-?replicas|set-?shards-?per-?node)$/);
 showHelp("Missing arguments") if (@ARGV < 5 && $ARGV[1] =~ /^(allocate-?empty)$/);
 showHelp("Must have both <old fn> and <new fn>") if (@ARGV < 4 && $ARGV[1] =~ /^(mv)$/);
 showHelp("Must have both <type> and <num> arguments") if (@ARGV < 4 && $ARGV[1] =~ /^(rotate|expire)$/);
 
 parseArgs(2) if ($ARGV[1] =~ /^(init|initnoprompt|upgrade|upgradenoprompt|clean)$/);
-parseArgs(3) if ($ARGV[1] =~ /^(rollback)$/);
+parseArgs(3) if ($ARGV[1] =~ /^(restore)$/);
 
 $main::userAgent = LWP::UserAgent->new(timeout => $ESTIMEOUT + 5);
 
@@ -2525,7 +2525,7 @@ if ($ARGV[1] =~ /^(init|wipe|clean)/) {
         usersCreate();
         queriesCreate();
     }
-} elsif ($ARGV[1] =~ /^rollback$/) {
+} elsif ($ARGV[1] =~ /^restore$/) {
 
     logmsg "It is STRONGLY recommended that you stop ALL moloch captures and viewers before proceeding.\n";
 
@@ -2551,11 +2551,11 @@ if ($ARGV[1] =~ /^(init|wipe|clean)/) {
 
     die "Cannot find files start with $basename in $path" if (scalar(@filelist) == 0);
 
-    logmsg "\nFollowing files will be used for rollback\n\n@filelist\n\n";
+    logmsg "\nFollowing files will be used for restore\n\n@filelist\n\n";
 
-    waitFor("ROLLBACK", "do you want to rollback? This will delete ALL data [@indexes] but sessions and history and restore from backups: files start with $basename in $path");
+    waitFor("RESTORE", "do you want to restore? This will delete ALL data [@indexes] but sessions and history and restore from backups: files start with $basename in $path");
 
-    logmsg "\nStarting Rollback...\n\n";
+    logmsg "\nStarting Restore...\n\n";
 
     logmsg "Erasing data ...\n\n";
 
@@ -2676,7 +2676,7 @@ if ($ARGV[1] =~ /^(init|wipe|clean)/) {
             close($fh);
         }
     }
-    logmsg "Finished Rollback.\n";
+    logmsg "Finished Restore.\n";
 } else {
 
 # Remaing is upgrade or upgradenoprompt
