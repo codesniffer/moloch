@@ -2325,27 +2325,27 @@ function validateUserIds (userIdList) {
       resolve({ validUsers: [], invalidUsers: [] });
     }
 
-    Db.searchUsers(query, (error, users) => {
-      if (error) {
-        reject('Unable to validate userIds');
-      }
+    Db.searchUsers(query)
+      .then((users) => {
+        let usersList = [];
+        usersList = users.hits.hits.map((user) => {
+          return user._source.userId;
+        });
 
-      let usersList = [];
-      usersList = users.hits.hits.map((user) => {
-        return user._source.userId;
+        let validUsers = [];
+        let invalidUsers = [];
+        for (let user of userIdList) {
+          usersList.indexOf(user) > -1 ? validUsers.push(user) : invalidUsers.push(user);
+        }
+
+        resolve({
+          validUsers: validUsers,
+          invalidUsers: invalidUsers
+        });
+      })
+      .catch((error) => {
+          reject('Unable to validate userIds');
       });
-
-      let validUsers = [];
-      let invalidUsers = [];
-      for (let user of userIdList) {
-        usersList.indexOf(user) > -1 ? validUsers.push(user) : invalidUsers.push(user);
-      }
-
-      resolve({
-        validUsers: validUsers,
-        invalidUsers: invalidUsers
-      });
-    });
   });
 }
 
@@ -7067,6 +7067,7 @@ Db.initialize({ host: internals.elasticBase,
   usersHost: Config.get('usersElasticsearch') ? Config.getArray('usersElasticsearch', ',', '') : undefined,
   usersPrefix: Config.get('usersPrefix'),
   nodeName: Config.nodeName(),
+  hostName: Config.hostName(),
   esClientKey: Config.get('esClientKey', null),
   esClientCert: Config.get('esClientCert', null),
   esClientKeyPass: Config.get('esClientKeyPass', null),
